@@ -28,9 +28,9 @@ type Services struct {
 type Infra struct {
 	Psql string
 
-	PsqlMaxOpen     int
-	PsqlMaxIdle     int
-	PsqlMaxLifetime time.Duration
+	PsqlDbMaxOpen     int
+	PsqlDbMaxIdle     int
+	PsqlDbMaxLifetime time.Duration
 }
 
 type Timeouts struct {
@@ -39,6 +39,7 @@ type Timeouts struct {
 	Hist time.Duration
 	Curr time.Duration
 	Conv time.Duration
+	Psql time.Duration
 
 	Read     time.Duration
 	Idle     time.Duration

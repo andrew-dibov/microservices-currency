@@ -2,9 +2,9 @@ package main
 
 import (
 	"microservices-currency/internal/configs"
+	"microservices-currency/internal/dbs"
 	"microservices-currency/internal/repos"
 
-	"database/sql"
 	"log/slog"
 	"os"
 
@@ -27,18 +27,14 @@ func main() {
 		"postgres", cfg.Infra.Psql,
 	)
 
-	psql, err := sql.Open("postgres", cfg.Infra.Psql)
+	db, err := dbs.NewPsqlDb(&cfg)
 	if err != nil {
 		log.Error("postgres database",
 			"error", err,
 		)
 		os.Exit(1)
 	}
-	defer psql.Close()
+	defer db.Close()
 
-	psql.SetMaxOpenConns(cfg.Psql.MaxOpen)
-	psql.SetMaxIdleConns(cfg.Psql.MaxIdle)
-	psql.SetConnMaxLifetime(cfg.Psql.MaxLifetime)
-
-	repo := repos.NewPsqlRepo(psql)
+	repo := repos.NewPsqlRepo(db.DB)
 }

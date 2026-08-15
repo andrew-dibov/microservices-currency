@@ -17,12 +17,14 @@ func (r *PsqlRepo) Rate(ctx context.Context, fromCurrency string, toCurrency str
 		return 1.00, nil
 	}
 
-	q := `SELECT rate FROM rates WHERE base_currency = 'USD' AND currency_code = $1`
-
 	var rate float64
 
 	if fromCurrency == "USD" {
-		err := r.psql.QueryRowContext(ctx, q, toCurrency).Scan(&rate)
+		err := r.psql.QueryRowContext(ctx,
+			`SELECT rate FROM rates WHERE base_currency = 'USD' AND currency_code = $1`,
+			toCurrency,
+		).Scan(&rate)
+
 		if err != nil {
 			return 0, err
 		}
@@ -30,26 +32,38 @@ func (r *PsqlRepo) Rate(ctx context.Context, fromCurrency string, toCurrency str
 	}
 
 	if toCurrency == "USD" {
-		err := r.psql.QueryRowContext(ctx, q, fromCurrency).Scan(&rate)
+		err := r.psql.QueryRowContext(ctx,
+			`SELECT rate FROM rates WHERE base_currency = 'USD' AND currency_code = $1`,
+			fromCurrency,
+		).Scan(&rate)
+
 		if err != nil {
 			return 0, err
 		}
 		return 1 / rate, nil
 	}
 
-	var from, to float64
+	var fromRate, toRate float64
 
-	err := r.psql.QueryRowContext(ctx, q, fromCurrency).Scan(&from)
+	err := r.psql.QueryRowContext(ctx,
+		`SELECT rate FROM rates WHERE base_currency = 'USD' AND currency_code = $1`,
+		fromCurrency,
+	).Scan(&fromRate)
+
 	if err != nil {
 		return 0, err
 	}
 
-	err = r.psql.QueryRowContext(ctx, q, toCurrency).Scan(&to)
+	err = r.psql.QueryRowContext(ctx,
+		`SELECT rate FROM rates WHERE base_currency = 'USD' AND currency_code = $1`,
+		toCurrency,
+	).Scan(&toRate)
+
 	if err != nil {
 		return 0, err
 	}
 
-	return to / from, nil
+	return toRate / fromRate, nil
 }
 
 func (r *PsqlRepo) Rates(ctx context.Context, baseCurrency string) (map[string]float64, error) {
@@ -57,7 +71,9 @@ func (r *PsqlRepo) Rates(ctx context.Context, baseCurrency string) (map[string]f
 		baseCurrency = "USD"
 	}
 
-	rows, err := r.psql.QueryContext(ctx, `SELECT currency_code, rate FROM rates WHERE base_currency = 'USD'`)
+	rows, err := r.psql.QueryContext(ctx,
+		`SELECT currency_code, rate FROM rates WHERE base_currency = 'USD'`)
+
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +107,7 @@ func (r *PsqlRepo) Rates(ctx context.Context, baseCurrency string) (map[string]f
 
 	baseToUSD, ok := ratesUSD[baseCurrency]
 	if !ok {
-		return nil, fmt.Errorf("baseCurrency is not in rates")
+		return nil, fmt.Errorf("baseCurrency is absent")
 	}
 
 	res := make(map[string]float64, len(ratesUSD))
@@ -104,7 +120,7 @@ func (r *PsqlRepo) Rates(ctx context.Context, baseCurrency string) (map[string]f
 
 func (r *PsqlRepo) Update(ctx context.Context, baseCurrency string, rates map[string]float64) error {
 	if baseCurrency == "" {
-		return fmt.Errorf("baseCurrency is empty")
+		return fmt.Errorf("baseCurrency is absent")
 	}
 
 	if len(rates) == 0 {

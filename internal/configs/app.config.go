@@ -25,9 +25,9 @@ func NewAppConfig() AppConfig {
 		Infra: Infra{
 			Psql: tools.GetStrEnv("PSQL_ADDR", "postgres://currency:1234@psql-currency:5432/currency"),
 
-			PsqlMaxOpen:     tools.GetIntEnv("PSQL_MAX_OPEN", 25),
-			PsqlMaxIdle:     tools.GetIntEnv("PSQL_MAX_IDLE", 25),
-			PsqlMaxLifetime: tools.GetDurEnv("PSQL_MAX_LIFE", 5*time.Minute),
+			PsqlDbMaxOpen:     tools.GetIntEnv("PSQL_MAX_OPEN", 25),
+			PsqlDbMaxIdle:     tools.GetIntEnv("PSQL_MAX_IDLE", 25),
+			PsqlDbMaxLifetime: tools.GetDurEnv("PSQL_MAX_LIFE", 5*time.Minute),
 		},
 
 		Timeouts: Timeouts{
@@ -36,6 +36,7 @@ func NewAppConfig() AppConfig {
 			Hist: tools.GetDurEnv("HIST_TOUT", 5*time.Second),
 			Curr: tools.GetDurEnv("CURR_TOUT", 5*time.Second),
 			Conv: tools.GetDurEnv("CONV_TOUT", 5*time.Second),
+			Psql: tools.GetDurEnv("PSQL_TOUT", 5*time.Second),
 
 			Read:     tools.GetDurEnv("READ_TOUT", 10*time.Second),
 			Idle:     tools.GetDurEnv("IDLE_TOUT", 15*time.Second),
