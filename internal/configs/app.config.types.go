@@ -9,8 +9,11 @@ type AppConfig struct {
 	Api   string
 	Token string
 
-	Services       Services
-	Infrastructure Infrastructure
+	Cert string
+	Key  string
+
+	Services Services
+	Infra    Infra
 
 	Timeouts Timeouts
 	Limits   Limits
@@ -22,8 +25,12 @@ type Services struct {
 	Conv string
 }
 
-type Infrastructure struct {
+type Infra struct {
 	Psql string
+
+	PsqlMaxOpen     int
+	PsqlMaxIdle     int
+	PsqlMaxLifetime time.Duration
 }
 
 type Timeouts struct {
@@ -39,4 +46,5 @@ type Timeouts struct {
 	Shutdown time.Duration
 }
 
-type Limits struct{}
+type Limits struct {
+}

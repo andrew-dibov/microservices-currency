@@ -24,10 +24,10 @@ func main() {
 		"prod", cfg.Prod,
 		"history", cfg.Services.Hist,
 		"conversion", cfg.Services.Conv,
-		"postgres", cfg.Infrastructure.Psql,
+		"postgres", cfg.Infra.Psql,
 	)
 
-	psql, err := sql.Open("postgres", cfg.Infrastructure.Psql)
+	psql, err := sql.Open("postgres", cfg.Infra.Psql)
 	if err != nil {
 		log.Error("postgres database",
 			"error", err,
@@ -36,8 +36,9 @@ func main() {
 	}
 	defer psql.Close()
 
+	psql.SetMaxOpenConns(cfg.Psql.MaxOpen)
+	psql.SetMaxIdleConns(cfg.Psql.MaxIdle)
+	psql.SetConnMaxLifetime(cfg.Psql.MaxLifetime)
+
 	repo := repos.NewPsqlRepo(psql)
-
-	/* --- */
-
 }

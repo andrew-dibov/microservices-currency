@@ -10,8 +10,11 @@ func NewAppConfig() AppConfig {
 		Port: tools.GetStrEnv("PORT", "8080"),
 		Prod: tools.GetBoolEnv("PROD", false),
 
-		Api:   tools.GetStrEnv("EX_URL", "https://v6.exchangerate-api.com/v6/"),
-		Token: tools.GetStrEnv("EX_TOKEN", ""),
+		Api:   tools.GetStrEnv("EX_API", "https://v6.exchangerate-api.com/v6/"),
+		Token: tools.GetStrEnv("EX_TKN", ""),
+
+		Cert: tools.GetStrEnv("TLS_CERT", ""),
+		Key:  tools.GetStrEnv("TLS_KEY", ""),
 
 		Services: Services{
 			Hist: tools.GetStrEnv("HIST_ADDR", "localhost:50051"),
@@ -19,11 +22,17 @@ func NewAppConfig() AppConfig {
 			Conv: tools.GetStrEnv("CONV_ADDR", "localhost:50053"),
 		},
 
-		Infrastructure: Infrastructure{
+		Infra: Infra{
 			Psql: tools.GetStrEnv("PSQL_ADDR", "postgres://currency:1234@psql-currency:5432/currency"),
+
+			PsqlMaxOpen:     tools.GetIntEnv("PSQL_MAX_OPEN", 25),
+			PsqlMaxIdle:     tools.GetIntEnv("PSQL_MAX_IDLE", 25),
+			PsqlMaxLifetime: tools.GetDurEnv("PSQL_MAX_LIFE", 5*time.Minute),
 		},
 
 		Timeouts: Timeouts{
+			Ex: tools.GetDurEnv("EX_TOUT", 5*time.Second),
+
 			Hist: tools.GetDurEnv("HIST_TOUT", 5*time.Second),
 			Curr: tools.GetDurEnv("CURR_TOUT", 5*time.Second),
 			Conv: tools.GetDurEnv("CONV_TOUT", 5*time.Second),
