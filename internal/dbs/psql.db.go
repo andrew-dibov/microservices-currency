@@ -7,26 +7,26 @@ import (
 	"microservices-currency/internal/configs"
 )
 
-func NewPsqlDb(cfg *configs.AppConfig) (*PsqlDb, error) {
-	db, err := sql.Open("postgres", cfg.Infra.Psql)
+func NewPsqlDB(c *configs.AppConfig) (*PsqlDB, error) {
+	db, err := sql.Open("postgres", c.Infra.Psql)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open %w", err)
+		return nil, fmt.Errorf("failed to open : %w", err)
 	}
 
-	db.SetMaxOpenConns(cfg.Infra.PsqlDbMaxOpen)
-	db.SetMaxIdleConns(cfg.Infra.PsqlDbMaxIdle)
-	db.SetConnMaxLifetime(cfg.Infra.PsqlDbMaxLifetime)
+	db.SetMaxOpenConns(c.Infra.PsqlDbMaxOpen)
+	db.SetMaxIdleConns(c.Infra.PsqlDbMaxIdle)
+	db.SetConnMaxLifetime(c.Infra.PsqlDbMaxLifetime)
 
-	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeouts.Psql)
-	defer cancel()
+	ctx, can := context.WithTimeout(context.Background(), c.Timeouts.Psql)
+	defer can()
 
 	if err := db.PingContext(ctx); err != nil {
-		return nil, fmt.Errorf("failed to ping %w", err)
+		return nil, fmt.Errorf("failed to ping : %w", err)
 	}
 
-	return &PsqlDb{db}, nil
+	return &PsqlDB{db}, nil
 }
 
-func (db *PsqlDb) Close() error {
+func (db *PsqlDB) Close() error {
 	return db.DB.Close()
 }

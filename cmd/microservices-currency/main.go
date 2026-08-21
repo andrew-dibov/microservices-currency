@@ -12,29 +12,27 @@ import (
 )
 
 func main() {
-	cfg := configs.NewAppConfig()
+	c := configs.NewAppConfig()
 
-	log := slog.New(map[bool]slog.Handler{
+	l := slog.New(map[bool]slog.Handler{
 		true:  slog.NewJSONHandler(os.Stdout, nil),
 		false: slog.NewTextHandler(os.Stdout, nil),
-	}[cfg.Prod])
+	}[c.Prod])
 
-	log.Info("app config",
-		"port", cfg.Port,
-		"prod", cfg.Prod,
-		"history", cfg.Services.Hist,
-		"conversion", cfg.Services.Conv,
-		"postgres", cfg.Infra.Psql,
+	l.Info("app config",
+		"port", c.Port,
+		"prod", c.Prod,
+		"history", c.Services.Hist,
+		"conversion", c.Services.Conv,
+		"postgres", c.Infra.Psql,
 	)
 
-	db, err := dbs.NewPsqlDb(&cfg)
+	db, err := dbs.NewPsqlDB(&c)
 	if err != nil {
-		log.Error("postgres database",
-			"error", err,
-		)
+		l.Error("postgres database", "error", err)
 		os.Exit(1)
 	}
 	defer db.Close()
 
-	repo := repos.NewPsqlRepo(db.DB)
+	rp := repos.NewPsqlRepo(db.DB)
 }

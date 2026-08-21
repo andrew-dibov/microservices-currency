@@ -2,6 +2,6 @@ package dbs
 
 import "database/sql"
 
-type PsqlDb struct {
+type PsqlDB struct {
 	*sql.DB
 }
