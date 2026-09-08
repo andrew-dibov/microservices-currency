@@ -1,38 +1,39 @@
 package main
 
 import (
+	"database/sql"
+	"microservices-currency/internal/clients"
 	"microservices-currency/internal/configs"
-	"microservices-currency/internal/dbs"
-	"microservices-currency/internal/repos"
-
-	"log/slog"
+	"microservices-currency/internal/loggers"
+	"microservices-currency/internal/repositories"
 	"os"
 
 	_ "github.com/lib/pq"
 )
 
 func main() {
-	c := configs.NewAppConfig()
+	appConfig := configs.NewAppConfig()
+	appLogger := loggers.NewAppLogger(appConfig)
 
-	l := slog.New(map[bool]slog.Handler{
-		true:  slog.NewJSONHandler(os.Stdout, nil),
-		false: slog.NewTextHandler(os.Stdout, nil),
-	}[c.Prod])
-
-	l.Info("app config",
-		"port", c.Port,
-		"prod", c.Prod,
-		"history", c.Services.Hist,
-		"conversion", c.Services.Conv,
-		"postgres", c.Infra.Psql,
+	appLogger.Info("config",
+		"port", appConfig.App.Port,
+		"prod", appConfig.App.Prod,
+		"postgres", appConfig.PostgresDatabase.Address,
 	)
 
-	db, err := dbs.NewPsqlDB(&c)
+	/* --- --- --- */
+
+	postgresDatabase, err := sql.Open("postgres", appConfig.PostgresDatabase.Address)
 	if err != nil {
-		l.Error("postgres database", "error", err)
+		appLogger.Error("postgresDatabase returned error", "error", err)
 		os.Exit(1)
 	}
-	defer db.Close()
+	defer postgresDatabase.Close()
 
-	rp := repos.NewPsqlRepo(db.DB)
+	postgresRepository := repositories.NewPostgresRepository(postgresDatabase)
+
+	/* --- --- --- */
+
+	exchangeClient := clients.NewExchangeClient(appConfig)
+
 }

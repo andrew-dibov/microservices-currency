@@ -3,8 +3,8 @@ package clients
 import "net/http"
 
 type ExchangeClient struct {
-	url  string
-	http *http.Client
+	url    string
+	client *http.Client
 }
 
 type ExchangeResponse struct {
