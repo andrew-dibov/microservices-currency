@@ -7,6 +7,8 @@ import (
 	"microservices-currency/internal/loggers"
 	"microservices-currency/internal/repositories"
 	"os"
+	"os/signal"
+	"syscall"
 
 	_ "github.com/lib/pq"
 )
@@ -25,7 +27,7 @@ func main() {
 
 	postgresDatabase, err := sql.Open("postgres", appConfig.PostgresDatabase.Address)
 	if err != nil {
-		appLogger.Error("postgresDatabase returned error", "error", err)
+		appLogger.Error("NewPostgresDatabase returned error", "error", err)
 		os.Exit(1)
 	}
 	defer postgresDatabase.Close()
@@ -34,6 +36,18 @@ func main() {
 
 	/* --- --- --- */
 
-	exchangeClient := clients.NewExchangeClient(appConfig)
+	exchangeClient := clients.NewExchangeClient(&appConfig)
+
+	/* --- --- --- */
+
+	// UPDATES
+
+	/* --- --- --- */
+
+	// SERVER
+
+	/* --- --- --- */
+
+	// SHUTDOWN
 
 }
