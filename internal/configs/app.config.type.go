@@ -3,7 +3,8 @@ package configs
 import "time"
 
 type AppConfig struct {
-	App App
+	App      App
+	Security Security
 
 	PostgresDatabase PostgresDatabase
 	ExchangeClient   ExchangeClient
@@ -21,6 +22,11 @@ type App struct {
 	IdleTimeout     time.Duration
 	WriteTimeout    time.Duration
 	ShutdownTimeout time.Duration
+}
+
+type Security struct {
+	Certificate string
+	Key         string
 }
 
 /* --- --- --- */

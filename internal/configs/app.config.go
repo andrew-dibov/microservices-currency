@@ -19,6 +19,11 @@ func NewAppConfig() AppConfig {
 			ShutdownTimeout: modules.GetDurationEnv("APP_SHUTDOWN_TIMEOUT", 5*time.Second),
 		},
 
+		Security: Security{
+			Certificate: modules.GetStringEnv("SECURITY_CERTIFICATE", ""),
+			Key:         modules.GetStringEnv("SECURITY_KEY", ""),
+		},
+
 		PostgresDatabase: PostgresDatabase{
 			Address: modules.GetStringEnv("POSTGRES_ADDRESS", "postgres://app:password@postgres-currency:5432/currency?sslmode=disable"),
 		},

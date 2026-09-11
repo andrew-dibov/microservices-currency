@@ -13,7 +13,7 @@ import (
 func NewExchangeClient(appConfig *configs.AppConfig) (*ExchangeClient, error) {
 	baseURL, err := url.Parse(appConfig.ExchangeClient.Address)
 	if err != nil {
-		return nil, fmt.Errorf("GetRates : reqURL %s : %w", appConfig.ExchangeClient.Address, err)
+		return nil, fmt.Errorf("failed to parse %s : %w", appConfig.ExchangeClient.Address, err)
 	}
 
 	return &ExchangeClient{
@@ -28,48 +28,36 @@ func NewExchangeClient(appConfig *configs.AppConfig) (*ExchangeClient, error) {
 /* --- --- --- */
 
 func (client *ExchangeClient) GetRates(ctx context.Context, baseCurrency string) (*GetRatesResponse, error) {
-	// if len(baseCurrency) != 3 {
-	// 	return nil, fmt.Errorf("baseCurrency is not 3 chars : %s", baseCurrency)
-	// }
-
-	// for _, ch := range baseCurrency {
-	// 	if ch < 'A' || ch > 'Z' {
-	// 		return nil, fmt.Errorf("baseCurrency has invalid chars : %s", baseCurrency)
-	// 	}
-	// }
-
-	/* --- --- --- */
-
 	client.baseURL.Path = path.Join(client.baseURL.Path, client.token, "latest", baseCurrency)
 
 	/* --- --- --- */
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, client.baseURL.String(), nil)
 	if err != nil {
-		return nil, fmt.Errorf("GetRates : baseCurrency %s : prepare request : %w", baseCurrency, err)
+		return nil, fmt.Errorf("failed to prepare request : %w", err)
 	}
 
 	res, err := client.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("GetRates : baseCurrency %s : perform request : %w", baseCurrency, err)
+		return nil, fmt.Errorf("failed to perform request : %w", err)
 	}
 	defer res.Body.Close()
 
 	/* --- --- --- */
 
 	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("GetRates : baseCurrency %s : API response : %s", baseCurrency, res.Status)
+		return nil, fmt.Errorf("API response : %s", res.Status)
 	}
 
 	body := http.MaxBytesReader(nil, res.Body, 10*1024*1024)
 
 	var data GetRatesResponse
 	if err := json.NewDecoder(body).Decode(&data); err != nil {
-		return nil, fmt.Errorf("GetRates : baseCurrency %s : decode response : %w", baseCurrency, err)
+		return nil, fmt.Errorf("failed to decode response : %w", err)
 	}
 
 	if data.ConversionRates == nil {
-		return nil, fmt.Errorf("GetRates : baseCurrency %s : miss rates", baseCurrency)
+		return nil, fmt.Errorf("rates missed")
 	}
 
 	return &data, nil
