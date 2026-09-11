@@ -3,11 +3,12 @@ package configs
 import "time"
 
 type AppConfig struct {
-	App      App
-	Security Security
+	App App
 
 	PostgresDatabase PostgresDatabase
 	ExchangeClient   ExchangeClient
+
+	Updater Updater
 }
 
 /* --- --- --- */
@@ -18,15 +19,10 @@ type App struct {
 	Prod bool
 	Port string
 
-	ReadTimeout     time.Duration
-	IdleTimeout     time.Duration
-	WriteTimeout    time.Duration
-	ShutdownTimeout time.Duration
-}
+	KeepaliveTime    time.Duration
+	KeepaliveTimeout time.Duration
 
-type Security struct {
-	Certificate string
-	Key         string
+	ShutdownTimeout time.Duration
 }
 
 /* --- --- --- */
@@ -42,4 +38,15 @@ type ExchangeClient struct {
 	Token   string
 
 	Timeout time.Duration
+}
+
+/* --- --- --- */
+
+type Updater struct {
+	BaseCurrency string
+
+	UpdateInterval time.Duration
+
+	FetchTimeout time.Duration
+	StoreTimeout time.Duration
 }

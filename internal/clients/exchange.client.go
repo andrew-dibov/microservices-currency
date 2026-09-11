@@ -28,11 +28,12 @@ func NewExchangeClient(appConfig *configs.AppConfig) (*ExchangeClient, error) {
 /* --- --- --- */
 
 func (client *ExchangeClient) GetRates(ctx context.Context, baseCurrency string) (*GetRatesResponse, error) {
-	client.baseURL.Path = path.Join(client.baseURL.Path, client.token, "latest", baseCurrency)
+	reqURL := *client.baseURL
+	reqURL.Path = path.Join(reqURL.Path, client.token, "latest", baseCurrency)
 
 	/* --- --- --- */
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, client.baseURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL.String(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare request : %w", err)
 	}

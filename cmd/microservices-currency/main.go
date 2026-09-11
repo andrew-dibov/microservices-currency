@@ -11,6 +11,8 @@ import (
 	"microservices-currency/pkg/api/currency"
 	"net"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -41,7 +43,11 @@ func main() {
 
 	/* --- --- --- */
 
-	exchangeClient := clients.NewExchangeClient(&appConfig)
+	exchangeClient, err := clients.NewExchangeClient(&appConfig)
+	if err != nil {
+		appLogger.Error("NewExchangeClient returned error", "error", err)
+		os.Exit(1)
+	}
 
 	/* --- --- --- */
 
@@ -49,29 +55,47 @@ func main() {
 
 	/* --- --- --- */
 
-	appServer := servers.NewCurrencyServer(postgresRepository, appLogger)
+	appServer := servers.NewAppServer(postgresRepository, appLogger)
 	grpcServer := grpc.NewServer(grpc.MaxRecvMsgSize(4*1024*1024), grpc.MaxSendMsgSize(4*1024*1024),
 		grpc.KeepaliveParams(keepalive.ServerParameters{
-			Time:    10 * time.Second, // вынести в конфиг
-			Timeout: 1 * time.Second,
+			Time:    appConfig.App.KeepaliveTime,
+			Timeout: appConfig.App.KeepaliveTimeout,
 		}))
 
 	currency.RegisterCurrencyServer(grpcServer, appServer)
 
-	listener, err := net.Listen("tcp", appConfig.App.Port)
+	appListener, err := net.Listen("tcp", ":"+appConfig.App.Port)
 	if err != nil {
-		appLogger.Error("ERRROR", err)
+		appLogger.Error("appListener returned error", err)
 		os.Exit(1)
 	}
 
 	go func() {
-		if err := grpcServer.Serve(listener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
-			appLogger.Error("ERROR")
+		if err := grpcServer.Serve(appListener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
+			appLogger.Error("grpcServer returned error", "error", err)
 			os.Exit(1)
 		}
 	}()
 
 	/* --- --- --- */
 
-	// SHUTDOWN
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	<-quit
+	appLogger.Info("server shutting down")
+
+	done := make(chan struct{})
+	go func() {
+		grpcServer.GracefulStop()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		appLogger.Info("server stopped")
+	case <-time.After(appConfig.App.ShutdownTimeout):
+		appLogger.Warn("server forced to stop")
+		grpcServer.Stop()
+	}
 }

@@ -33,7 +33,7 @@ func (repository *PostgresRepository) GetRate(ctx context.Context, fromCurrency 
 	if fromCurrency == "USD" {
 		err := repository.postgresDatabase.QueryRowContext(ctx, query, toCurrency).Scan(&rate)
 		if err != nil {
-			return 0, fmt.Errorf("failed to get rate with fromCurrency USD : %w", err)
+			return 0, fmt.Errorf("get rate with fromCurrency USD : %w", err)
 		}
 		return rate, nil
 	}
@@ -41,7 +41,7 @@ func (repository *PostgresRepository) GetRate(ctx context.Context, fromCurrency 
 	if toCurrency == "USD" {
 		err := repository.postgresDatabase.QueryRowContext(ctx, query, fromCurrency).Scan(&rate)
 		if err != nil {
-			return 0, fmt.Errorf("failed to get rate with toCurrency USD : %w", err)
+			return 0, fmt.Errorf("get rate with toCurrency USD : %w", err)
 		}
 		return 1 / rate, nil
 	}
@@ -52,12 +52,12 @@ func (repository *PostgresRepository) GetRate(ctx context.Context, fromCurrency 
 
 	err := repository.postgresDatabase.QueryRowContext(ctx, query, fromCurrency).Scan(&fromRate)
 	if err != nil {
-		return 0, fmt.Errorf("failed to get rate with fromCurrency %s : %w", fromCurrency, err)
+		return 0, fmt.Errorf("get rate with fromCurrency %s : %w", fromCurrency, err)
 	}
 
 	err = repository.postgresDatabase.QueryRowContext(ctx, query, toCurrency).Scan(&toRate)
 	if err != nil {
-		return 0, fmt.Errorf("failed to get rate with toCurrency %s : %w", toCurrency, err)
+		return 0, fmt.Errorf("get rate with toCurrency %s : %w", toCurrency, err)
 	}
 
 	return toRate / fromRate, nil
@@ -74,7 +74,7 @@ func (repository *PostgresRepository) GetRates(ctx context.Context, baseCurrency
 
 	rows, err := repository.postgresDatabase.QueryContext(ctx, query, baseCurrency)
 	if err != nil {
-		return nil, fmt.Errorf("failed to perform request : %w", err)
+		return nil, fmt.Errorf("perform request : %w", err)
 	}
 	defer rows.Close()
 
@@ -86,13 +86,13 @@ func (repository *PostgresRepository) GetRates(ctx context.Context, baseCurrency
 		var rate float64
 
 		if err := rows.Scan(&code, &rate); err != nil {
-			return nil, fmt.Errorf("failed to read row : %w", err)
+			return nil, fmt.Errorf("read row : %w", err)
 		}
 		rates[code] = rate
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("failed to iterate rows : %w", err)
+		return nil, fmt.Errorf("iterate rows : %w", err)
 	}
 
 	if len(rates) == 0 {
@@ -113,14 +113,14 @@ func (repository *PostgresRepository) UpdateRates(ctx context.Context, baseCurre
 
 	tx, err := repository.postgresDatabase.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("failed to begin transaction : %w", err)
+		return fmt.Errorf("begin transaction : %w", err)
 	}
 	defer tx.Rollback()
 
 	/* --- --- --- */
 
 	if _, err := tx.ExecContext(ctx, "DELETE FROM rates WHERE base_currency = $1", baseCurrency); err != nil {
-		return fmt.Errorf("failed to delete rates : %w", err)
+		return fmt.Errorf("delete rates : %w", err)
 	}
 
 	query := `
@@ -130,9 +130,12 @@ func (repository *PostgresRepository) UpdateRates(ctx context.Context, baseCurre
 
 	for code, rate := range rates {
 		if _, err := tx.ExecContext(ctx, query, baseCurrency, code, rate); err != nil {
-			return fmt.Errorf("failed to insert rate : %w", err)
+			return fmt.Errorf("insert rate : %w", err)
 		}
 	}
 
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit transaction : %w", err)
+	}
+	return nil
 }

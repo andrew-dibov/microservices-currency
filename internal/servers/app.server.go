@@ -6,14 +6,14 @@ import (
 	"microservices-currency/pkg/api/currency"
 )
 
-type CurrencyServer struct {
+type AppServer struct {
 	currency.UnimplementedCurrencyServer
 	postgresRepository *repositories.PostgresRepository
 	appLogger          *loggers.AppLogger
 }
 
-func NewCurrencyServer(postgresRepository *repositories.PostgresRepository, appLogger *loggers.AppLogger) *CurrencyServer {
-	return &CurrencyServer{
+func NewAppServer(postgresRepository *repositories.PostgresRepository, appLogger *loggers.AppLogger) *AppServer {
+	return &AppServer{
 		postgresRepository: postgresRepository,
 		appLogger:          appLogger,
 	}
