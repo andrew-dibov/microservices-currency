@@ -13,29 +13,34 @@ func NewAppConfig() AppConfig {
 			Prod: modules.GetBooleanEnv("APP_PROD", false),
 			Port: modules.GetStringEnv("APP_PORT", "50052"),
 
-			KeepaliveTime:    modules.GetDurationEnv("GRPC_KEEPALIVE_TIME", 10*time.Second),
-			KeepaliveTimeout: modules.GetDurationEnv("GRPC_KEEPALIVE_TIMEOUT", 1*time.Second),
+			KeepaliveTime:    modules.GetDurationEnv("APP_KEEPALIVE_TIME", 5*time.Second),
+			KeepaliveTimeout: modules.GetDurationEnv("APP_KEEPALIVE_TIMEOUT", 5*time.Second),
 
 			ShutdownTimeout: modules.GetDurationEnv("APP_SHUTDOWN_TIMEOUT", 5*time.Second),
 		},
 
 		PostgresDatabase: PostgresDatabase{
-			Address: modules.GetStringEnv("POSTGRES_ADDRESS", "postgres://app:password@postgres-currency:5432/currency?sslmode=disable"),
+			DSN: "postgres://" +
+				modules.GetStringEnv("POSTGRES_USER", "app") +
+				":" + modules.GetStringEnv("POSTGRES_PASSWORD", "1234") +
+				"@" + modules.GetStringEnv("POSTGRES_HOST", "postgres-currency") +
+				":" + modules.GetStringEnv("POSTGRES_PORT", "5432") +
+				"/" + modules.GetStringEnv("POSTGRES_DATABASE", "currency") +
+				"?" + modules.GetStringEnv("POSTGRES_PARAMETERS", "sslmode=disable"),
 		},
 
 		ExchangeClient: ExchangeClient{
-			Address: modules.GetStringEnv("EXCHANGE_ADDRESS", "https://v6.exchangerate-api.com/v6/"),
 			Token:   modules.GetStringEnv("EXCHANGE_TOKEN", ""),
-
+			Address: modules.GetStringEnv("EXCHANGE_ADDRESS", "https://v6.exchangerate-api.com/v6/"),
 			Timeout: modules.GetDurationEnv("EXCHANGE_TIMEOUT", 10*time.Second),
 		},
 
-		Updater: Updater{
-			UpdateInterval: modules.GetDurationEnv("UPDATE_INTERVAL", 1*time.Hour),
-			BaseCurrency:   modules.GetStringEnv("UPDATE_BASE_CURRENCY", "USD"),
+		UpdaterJob: UpdaterJob{
+			BaseCurrency:   modules.GetStringEnv("UPDATER_BASE_CURRENCY", "USD"),
+			UpdateInterval: modules.GetDurationEnv("UPDATER_UPDATE_INTERVAL", 1*time.Hour),
 
-			FetchTimeout: modules.GetDurationEnv("UPDATE_FETCH_TIMEOUT", 5*time.Second),
-			StoreTimeout: modules.GetDurationEnv("UPDATE_STORE_TIMEOUT", 25*time.Second),
+			FetchTimeout: modules.GetDurationEnv("UPDATER_FETCH_TIMEOUT", 5*time.Second),
+			StoreTimeout: modules.GetDurationEnv("UPDATER_STORE_TIMEOUT", 25*time.Second),
 		},
 	}
 }

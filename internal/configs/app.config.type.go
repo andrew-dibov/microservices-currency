@@ -7,8 +7,7 @@ type AppConfig struct {
 
 	PostgresDatabase PostgresDatabase
 	ExchangeClient   ExchangeClient
-
-	Updater Updater
+	UpdaterJob       UpdaterJob
 }
 
 /* --- --- --- */
@@ -28,23 +27,21 @@ type App struct {
 /* --- --- --- */
 
 type PostgresDatabase struct {
-	Address string
+	DSN string
 }
 
 /* --- --- --- */
 
 type ExchangeClient struct {
-	Address string
 	Token   string
-
+	Address string
 	Timeout time.Duration
 }
 
 /* --- --- --- */
 
-type Updater struct {
-	BaseCurrency string
-
+type UpdaterJob struct {
+	BaseCurrency   string
 	UpdateInterval time.Duration
 
 	FetchTimeout time.Duration

@@ -3,7 +3,6 @@ package main
 import (
 	"database/sql"
 	"errors"
-	"microservices-currency/internal/clients"
 	"microservices-currency/internal/configs"
 	"microservices-currency/internal/loggers"
 	"microservices-currency/internal/repositories"
@@ -27,27 +26,28 @@ func main() {
 	appLogger.Info("config",
 		"port", appConfig.App.Port,
 		"prod", appConfig.App.Prod,
-		"postgres", appConfig.PostgresDatabase.Address,
-		"exchange", appConfig.ExchangeClient.Address,
+		"postgres_dsn", appConfig.PostgresDatabase.DSN,
+		"exchange_address", appConfig.ExchangeClient.Address,
 	)
 
 	/* --- --- --- */
 
-	postgresDatabase, err := sql.Open("postgres", appConfig.PostgresDatabase.Address)
+	postgresDatabase, err := sql.Open("postgres", appConfig.PostgresDatabase.DSN)
 	if err != nil {
 		appLogger.Error("NewPostgresDatabase returned error", "error", err)
 		os.Exit(1)
 	}
 	defer postgresDatabase.Close()
+
 	postgresRepository := repositories.NewPostgresRepository(postgresDatabase)
 
 	/* --- --- --- */
 
-	exchangeClient, err := clients.NewExchangeClient(&appConfig)
-	if err != nil {
-		appLogger.Error("NewExchangeClient returned error", "error", err)
-		os.Exit(1)
-	}
+	// exchangeClient, err := clients.NewExchangeClient(&appConfig)
+	// if err != nil {
+	// 	appLogger.Error("NewExchangeClient returned error", "error", err)
+	// 	os.Exit(1)
+	// }
 
 	/* --- --- --- */
 
@@ -55,24 +55,23 @@ func main() {
 
 	/* --- --- --- */
 
-	appServer := servers.NewAppServer(postgresRepository, appLogger)
 	grpcServer := grpc.NewServer(grpc.MaxRecvMsgSize(4*1024*1024), grpc.MaxSendMsgSize(4*1024*1024),
 		grpc.KeepaliveParams(keepalive.ServerParameters{
 			Time:    appConfig.App.KeepaliveTime,
 			Timeout: appConfig.App.KeepaliveTimeout,
 		}))
 
-	currency.RegisterCurrencyServer(grpcServer, appServer)
+	currency.RegisterCurrencyServer(grpcServer, servers.NewAppServer(postgresRepository, appLogger))
 
 	appListener, err := net.Listen("tcp", ":"+appConfig.App.Port)
 	if err != nil {
-		appLogger.Error("appListener returned error", err)
+		appLogger.Error("appListener returned error", "error", err)
 		os.Exit(1)
 	}
 
 	go func() {
 		if err := grpcServer.Serve(appListener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
-			appLogger.Error("grpcServer returned error", "error", err)
+			appLogger.Error("appServer returned error", "error", err)
 			os.Exit(1)
 		}
 	}()
@@ -81,9 +80,7 @@ func main() {
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-
 	<-quit
-	appLogger.Info("server shutting down")
 
 	done := make(chan struct{})
 	go func() {

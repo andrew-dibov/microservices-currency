@@ -6,8 +6,8 @@ import (
 )
 
 type ExchangeClient struct {
-	baseURL *url.URL
 	token   string
+	baseURL *url.URL
 	client  *http.Client
 }
 
