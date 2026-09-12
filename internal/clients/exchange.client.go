@@ -27,7 +27,7 @@ func NewExchangeClient(appConfig *configs.AppConfig) (*ExchangeClient, error) {
 
 /* --- --- --- */
 
-func (client *ExchangeClient) Rates(ctx context.Context, baseCurrency string) (*GetRatesResponse, error) {
+func (client *ExchangeClient) Rates(ctx context.Context, baseCurrency string) (map[string]float64, error) {
 	currentURL := *client.baseURL
 	currentURL.Path = path.Join(currentURL.Path, client.token, "latest", baseCurrency)
 
@@ -61,5 +61,5 @@ func (client *ExchangeClient) Rates(ctx context.Context, baseCurrency string) (*
 		return nil, fmt.Errorf("Rates response rates missing")
 	}
 
-	return &data, nil
+	return data.ConversionRates, nil
 }

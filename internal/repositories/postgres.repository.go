@@ -130,7 +130,7 @@ func (repository *PostgresRepository) Update(ctx context.Context, baseCurrency s
 
 	for code, rate := range rates {
 		if _, err := tx.ExecContext(ctx, query, baseCurrency, code, rate); err != nil {
-			return fmt.Errorf("PostgresRepository update insertion failed : %w", err)
+			return fmt.Errorf("PostgresRepository update insertion failed : code %s, rate %v : %w", code, rate, err)
 		}
 	}
 

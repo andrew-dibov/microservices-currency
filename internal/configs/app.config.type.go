@@ -41,9 +41,7 @@ type ExchangeClient struct {
 /* --- --- --- */
 
 type UpdaterJob struct {
-	BaseCurrency   string
 	UpdateInterval time.Duration
-
-	FetchTimeout time.Duration
-	StoreTimeout time.Duration
+	FetchTimeout   time.Duration
+	StoreTimeout   time.Duration
 }

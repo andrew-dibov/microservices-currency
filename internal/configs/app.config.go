@@ -36,11 +36,9 @@ func NewAppConfig() AppConfig {
 		},
 
 		UpdaterJob: UpdaterJob{
-			BaseCurrency:   modules.GetStringEnv("UPDATER_BASE_CURRENCY", "USD"),
 			UpdateInterval: modules.GetDurationEnv("UPDATER_UPDATE_INTERVAL", 1*time.Hour),
-
-			FetchTimeout: modules.GetDurationEnv("UPDATER_FETCH_TIMEOUT", 5*time.Second),
-			StoreTimeout: modules.GetDurationEnv("UPDATER_STORE_TIMEOUT", 25*time.Second),
+			FetchTimeout:   modules.GetDurationEnv("UPDATER_FETCH_TIMEOUT", 15*time.Second),
+			StoreTimeout:   modules.GetDurationEnv("UPDATER_STORE_TIMEOUT", 25*time.Second),
 		},
 	}
 }

@@ -1,9 +1,13 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"errors"
+	"microservices-currency/internal/clients"
 	"microservices-currency/internal/configs"
+	"microservices-currency/internal/interceptors"
+	"microservices-currency/internal/jobs"
 	"microservices-currency/internal/loggers"
 	"microservices-currency/internal/repositories"
 	"microservices-currency/internal/servers"
@@ -43,19 +47,25 @@ func main() {
 
 	/* --- --- --- */
 
-	// exchangeClient, err := clients.NewExchangeClient(&appConfig)
-	// if err != nil {
-	// 	appLogger.Error("NewExchangeClient returned error", "error", err)
-	// 	os.Exit(1)
-	// }
+	exchangeClient, err := clients.NewExchangeClient(&appConfig)
+	if err != nil {
+		appLogger.Error("NewExchangeClient returned error", "error", err)
+		os.Exit(1)
+	}
+
+	updaterJob := jobs.NewUpdaterJob(&appConfig, appLogger, exchangeClient, postgresRepository)
 
 	/* --- --- --- */
 
-	// UPDATES
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go updaterJob.Start(ctx)
 
 	/* --- --- --- */
 
 	grpcServer := grpc.NewServer(grpc.MaxRecvMsgSize(4*1024*1024), grpc.MaxSendMsgSize(4*1024*1024),
+		grpc.UnaryInterceptor(interceptors.TraceInterceptor),
 		grpc.KeepaliveParams(keepalive.ServerParameters{
 			Time:    appConfig.App.KeepaliveTime,
 			Timeout: appConfig.App.KeepaliveTimeout,
@@ -71,7 +81,7 @@ func main() {
 
 	go func() {
 		if err := grpcServer.Serve(appListener); err != nil && !errors.Is(err, grpc.ErrServerStopped) {
-			appLogger.Error("appServer returned error", "error", err)
+			appLogger.Error("grpcServer returned error", "error", err)
 			os.Exit(1)
 		}
 	}()
@@ -80,7 +90,9 @@ func main() {
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
 	<-quit
+	cancel()
 
 	done := make(chan struct{})
 	go func() {
