@@ -30,7 +30,6 @@ func main() {
 	appLogger.Info("config",
 		"port", appConfig.App.Port,
 		"prod", appConfig.App.Prod,
-		"postgres_dsn", appConfig.PostgresDatabase.DSN,
 		"exchange_address", appConfig.ExchangeClient.Address,
 	)
 
