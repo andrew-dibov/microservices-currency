@@ -2,36 +2,28 @@ services:
   currency:
     image: microservices-currency:latest
     ports:
-      - "${PORT:-8080}:8080"
-    volumes:
-      - ./certs:/certs:ro
+      - "${PORT:-50052}:50052"
     environment:
-      - PORT=8080
-      - PROD=false
+      - APP_NAME="microservices-currency"
+      - APP_PROD=true
+      - APP_PORT=50052
+      #---
+      - APP_KEEPALIVE_TIME=5s
+      - APP_KEEPALIVE_TIMEOUT=5s
+      - APP_SHUTDOWN_TIMEOUT=5s
       # ---
-      - HIST_ADDR=history:50051
-      - CONV_ADDR=conversion:50053
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+      - POSTGRES_DSN=postgres://app:1234@postgres-currency:5432/currency?sslmode=disable
+      # ---
+      - EXCHANGE_ADDRESS=https://v6.exchangerate-api.com/v6/
+      - EXCHANGE_TIMEOUT=10s
+      # ---
+      - UPDATER_UPDATE_INTERVAL=1h
+      - UPDATER_FETCH_TIMEOUT=15s
+      - UPDATER_STORE_TIMEOUT=25s
+    env_file:
+      - .env
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-check-certificate --spider --quiet https://localhost:8080/healthz || exit 1"]
+      test: ["CMD-SHELL", "nc -z localhost 50052 || exit 1"]
       retries: 3
       timeout: 3s
       interval: 3s
@@ -50,7 +42,10 @@ services:
         GO_VERSION: ${GO_VERSION:-1.25.0}
     container_name: microservices-currency
 
+    networks:
+      - app
 
-
-
-
+networks:
+  app:
+    external: true
+    name: app
