@@ -1,0 +1,13 @@
+networks:
+  app:
+  data:
+
+volumes:
+  currency:
+    driver: local
+
+# ---
+
+include:
+  - compose.app.yml
+  - compose.data.yml

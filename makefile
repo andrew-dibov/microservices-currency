@@ -47,6 +47,14 @@ stop_container:
 
 # ---
 
+up_compose:
+	@docker compose up -d
+
+down_compose:
+	@docker compose down -v
+
+# ---
+
 clean:
 	@rm -rf bin
 

@@ -1,0 +1,72 @@
+x-base: &base
+  mem_reservation: 256m
+  mem_limit: 512m
+  cpus: '0.5'
+
+  restart: unless-stopped
+
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "10m"
+      max-file: "5"
+
+x-healthcheck: &healthcheck
+  retries: 3
+  timeout: 3s
+  interval: 3s
+  start_period: 3s 
+  start_interval: 3s
+
+# ---
+
+services:
+  currency:
+    <<: *base
+    image: ${CMD_NAME:-microservices-currency}:latest
+    container_name: ${CMD_NAME:-microservices-currency}
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        CMD_NAME: ${CMD_NAME:-microservices-currency}
+        GO_VERSION: ${GO_VERSION:-1.25.0}
+
+    ports:
+      - ${HOST_PORT:-50052}:${APP_PORT:-50052}
+
+    networks:
+      - app
+      - data
+
+    depends_on:
+      currency-postgres:
+        condition: service_healthy
+      currency-postgres-migrate:
+        condition: service_completed_successfully
+
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 50052 || exit 1"]
+      <<: *healthcheck
+
+    # ---
+
+    env_file: [".env"]
+    environment:
+      - APP_NAME=${CMD_NAME:-microservices-currency}
+      - APP_PROD=true
+      - APP_PORT=${APP_PORT:-50052}
+      #---
+      - APP_KEEPALIVE_TIME=5s
+      - APP_KEEPALIVE_TIMEOUT=5s
+      - APP_SHUTDOWN_TIMEOUT=5s
+      # ---
+      - POSTGRES_DSN=postgres://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-2525}@${CMD_NAME:-microservices-currency}-postgres:5432/${POSTGRES_DB:-currency}?sslmode=disable
+      # ---
+      - EXCHANGE_ADDRESS=https://v6.exchangerate-api.com/v6/
+      - EXCHANGE_TIMEOUT=10s
+      # ---
+      - UPDATER_UPDATE_INTERVAL=1h
+      - UPDATER_FETCH_TIMEOUT=15s
+      - UPDATER_STORE_TIMEOUT=25s
