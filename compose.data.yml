@@ -33,31 +33,25 @@ services:
       - data
 
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U app -d currency -h localhost"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-app} -d ${POSTGRES_DB:-currency} -h localhost"]
       <<: *healthcheck
-
-    # ---
 
     env_file: [".env"]
 
   # ---
 
   currency-postgres-migrate:
-    image: migrate/migrate
-    container_name: ${CMD_NAME:-microservices-currency}-postgres-migrate
+    image: migrate/migrate    
+    command: ["-path=/migrations", "-database=${POSTGRES_DSN}", "up"]
 
     volumes:
       - ./migrations:/migrations
 
-    command: [
-      "-path=/migrations",
-      "-database=postgres://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD:-2525}@${CMD_NAME:-microservices-currency}-postgres:5432/${POSTGRES_DB:-currency}?sslmode=disable",
-      "up"
-    ]
+    networks:
+      - data
 
     depends_on:
       currency-postgres:
         condition: service_healthy
 
-    networks:
-      - data
+    env_file: [".env"]

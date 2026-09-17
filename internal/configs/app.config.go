@@ -20,7 +20,7 @@ func NewAppConfig() AppConfig {
 		},
 
 		PostgresDatabase: PostgresDatabase{
-			DSN: modules.GetStringEnv("POSTGRES_DSN", "postgres://app:1234@postgres-currency:5432/currency?sslmode=disable"),
+			DSN: modules.GetStringEnv("POSTGRES_DSN", "postgres://app:1234@currency-postgres:5432/currency?sslmode=disable"),
 		},
 
 		ExchangeClient: ExchangeClient{

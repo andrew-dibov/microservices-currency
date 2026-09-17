@@ -1,83 +1,56 @@
-CMD_NAME := microservices-currency
-
-BIN_NAME := $(CMD_NAME)-bin
-IMG_NAME := $(CMD_NAME):latest
-
-API_KEY := $(CMD_NAME)-key
-
+.PHONY: install run start stop up down test help
 .DEFAULT_GOAL := help
-#.PHONY:
+
+-include .env
+export
 
 # ---
 
-get_deps:
+install:
 	@go mod tidy
 
-get_protoc:
 	@go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 	@go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-
-# ---
-
-gen_protos:
+	
 	@protoc --go_out=. --go-grpc_out=. proto/currency/currency.proto
 	@protoc --go_out=. --go-grpc_out=. proto/conversion/conversion.proto
 
-# ---
+	@docker image build \
+		--build-arg GO_VERSION=${GO_VERSION} \
+		--build-arg CMD_NAME=${CMD_NAME} \
+		--build-arg APP_PORT=${APP_PORT} \
+		-t ${CMD_NAME}:latest .
 
-build_bin: gen_protos gen_certs
-	@CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o bin/$(BIN_NAME) cmd/$(CMD_NAME)/main.go
+run:
+	@go run cmd/${CMD_NAME}/main.go
 
-run_bin: build_bin
-	@./bin/$(BIN_NAME)
+start:
+	@docker container run -d --rm \
+		--env-file .env \
+		-p ${HOST_PORT}:${APP_PORT} \
+		--name ${CMD_NAME} \
+		${CMD_NAME}:latest
+	@docker container ps --filter name=${CMD_NAME}
 
-# ---
+stop:
+	@docker container stop ${CMD_NAME} > /dev/null 2>&1
 
-run_app: get_deps get_protoc gen_protos
-	@go run cmd/$(CMD_NAME)/main.go
+up:
+	@docker compose build
+	@docker compose up -d --no-build
+	@docker compose rm -f currency-postgres-migrate > /dev/null 2>&1 || true
 
-# ---
-
-build_container:
-	@docker image build -t $(IMG_NAME) . > /dev/null 2>&1
-
-run_container: build_container
-	@docker container run -d --rm --name $(CMD_NAME) \
-		-e APP_PROD=true \
-		-p 50052:50052 $(IMG_NAME)
-
-stop_container:
-	@docker container stop $(CMD_NAME) > /dev/null 2>&1
-
-# ---
-
-up_compose:
-	@docker compose up -d
-
-down_compose:
+down:
 	@docker compose down -v
 
-# ---
-
-clean:
-	@rm -rf bin
-
-# ---
+test:
+	@bash shell/test.sh
 
 help:
-	@echo "get_deps        установить зависимости"
-	@echo "get_protoc      установить protoc"
-
-	@echo "gen_protos      сгенерировать .proto"
-
-	@echo "build_bin       собрать бинарник"
-	@echo "run_bin         запустить бинарник"
-
-	@echo "run_app         запустить приложение"
-
-	@echo "build_container собрать образ"
-	@echo "run_container   запустить контейнер"
-	@echo "stop_container  остановить контейнер"
-
-	@echo "clean           удалить сертификаты и бинарник"
-	@echo "help            показать справку"
+	@echo "install : установить зависимости и собрать docker образ"
+	@echo "run     : запустить приложение"
+	@echo "start   : запустить docker контейнер"
+	@echo "stop    : остановить docker контейнер"
+	@echo "up      : запустить docker compose проект"
+	@echo "down    : остановить docker compose проект"
+	@echo "test    : запустить тестирование"
