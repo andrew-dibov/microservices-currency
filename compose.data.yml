@@ -23,7 +23,7 @@ x-healthcheck: &healthcheck
 services:
   currency-postgres:
     <<: *base
-    image: postgres:16-alpine
+    image: postgres:latest
     container_name: ${CMD_NAME:-microservices-currency}-postgres
 
     volumes:
@@ -38,10 +38,8 @@ services:
 
     env_file: [".env"]
 
-  # ---
-
   currency-postgres-migrate:
-    image: migrate/migrate    
+    image: migrate/migrate:latest    
     command: ["-path=/migrations", "-database=${POSTGRES_DSN}", "up"]
 
     volumes:

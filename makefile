@@ -1,4 +1,4 @@
-.PHONY: install run start stop up down test help
+.PHONY: install run start stop up down test clean help
 .DEFAULT_GOAL := help
 
 -include .env
@@ -45,6 +45,9 @@ down:
 
 test:
 	@bash shell/test.sh
+
+clean:
+	@rm -rf pkg
 
 help:
 	@echo "install : установить зависимости и собрать docker образ"

@@ -30,8 +30,7 @@ func main() {
 	appLogger.Info("config",
 		"port", appConfig.App.Port,
 		"prod", appConfig.App.Prod,
-		"exchange_address", appConfig.ExchangeClient.Address,
-	)
+		"exchange_address", appConfig.ExchangeClient.Address)
 
 	/* --- --- --- */
 
